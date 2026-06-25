@@ -25,21 +25,6 @@ exports.bookRide = async (req, res) => {
     // Generate a random 4 digit OTP
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    // Mock driver assignment
-    let driver = await Driver.findOne({ status: 'Available' });
-    if (!driver) {
-      // Create a mock driver if none exists
-      driver = new Driver({
-        name: 'John Doe',
-        vehicle: 'Toyota Prius',
-        plate: 'MH-01-AB-1234'
-      });
-      await driver.save();
-    }
-
-    driver.status = 'Busy';
-    await driver.save();
-
     const booking = new Booking({
       user: req.user.id,
       pickup,
@@ -51,8 +36,7 @@ exports.bookRide = async (req, res) => {
       fare,
       time,
       otp,
-      driver: driver._id,
-      status: 'Assigned' // Skipping 'Searching' for instant demo
+      status: 'Searching' 
     });
 
     await booking.save();
@@ -61,7 +45,7 @@ exports.bookRide = async (req, res) => {
     const user = await User.findById(req.user.id);
     await notificationService.sendEmergencyAlert(user, booking);
 
-    res.status(201).json({ booking, driver });
+    res.status(201).json({ booking });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -73,12 +57,6 @@ exports.getRideStatus = async (req, res) => {
     const booking = await Booking.findById(req.params.id).populate('driver');
     if (!booking) {
       return res.status(404).json({ message: 'Ride not found' });
-    }
-
-    // Mocking progress if it's assigned
-    if (booking.status === 'Assigned') {
-      booking.status = 'Arriving';
-      await booking.save();
     }
 
     res.json(booking);

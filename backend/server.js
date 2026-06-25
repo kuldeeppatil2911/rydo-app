@@ -12,18 +12,21 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+const { MongoMemoryServer } = require('mongodb-memory-server');
+
 // Database connection
 const connectDB = async () => {
   try {
-    if (!process.env.MONGODB_URI) {
-      console.warn("MONGODB_URI is not defined in .env. Running without MongoDB connection for now.");
-      return;
+    let dbUri = process.env.MONGODB_URI;
+    
+    if (!dbUri) {
+      console.log("No MONGODB_URI found in .env. Starting up in-memory MongoDB for testing...");
+      const mongoServer = await MongoMemoryServer.create();
+      dbUri = mongoServer.getUri();
     }
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB connected successfully');
+
+    await mongoose.connect(dbUri);
+    console.log(`MongoDB connected successfully at ${dbUri}`);
   } catch (error) {
     console.error('MongoDB connection error:', error);
     process.exit(1);
@@ -36,6 +39,8 @@ connectDB();
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/ride', require('./routes/rideRoutes'));
 app.use('/api/profile', require('./routes/profileRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/driver', require('./routes/driverRoutes'));
 
 app.get('/', (req, res) => {
   res.send('Rydo Backend API is running');

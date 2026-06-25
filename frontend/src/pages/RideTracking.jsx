@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { ShieldCheck, CheckCircle, Car } from 'lucide-react';
 
 const RideTracking = () => {
@@ -9,14 +9,26 @@ const RideTracking = () => {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // For simulation purposes, setting a fixed coordinate for the map
-  const position = [19.0760, 72.8777]; // Mumbai coordinates as default
+  // Mock coordinates for demonstration since we aren't using a real geocoder
+  const defaultCenter = [19.0760, 72.8777]; 
+  const [routeCoords, setRouteCoords] = useState([
+    [19.0760, 72.8777],
+    [19.0900, 72.8900]
+  ]);
 
   useEffect(() => {
     const fetchRide = async () => {
       try {
         const res = await axios.get(`/ride/${id}`);
         setBooking(res.data);
+        
+        // Slightly randomizing coords just for visual effect on reload
+        const offset = Math.random() * 0.01;
+        setRouteCoords([
+          [19.0760 + offset, 72.8777 - offset],
+          [19.0900 - offset, 72.8900 + offset]
+        ]);
+
         setLoading(false);
       } catch (err) {
         console.error(err);
@@ -25,13 +37,13 @@ const RideTracking = () => {
     };
     fetchRide();
     
-    // Polling to simulate status updates
+    // Polling to simulate status updates from driver app
     const interval = setInterval(fetchRide, 5000);
     return () => clearInterval(interval);
   }, [id]);
 
-  if (loading) return <div style={{ textAlign: 'center' }}>Loading ride details...</div>;
-  if (!booking) return <div style={{ textAlign: 'center' }}>Ride not found.</div>;
+  if (loading) return <div style={{ textAlign: 'center', padding: '3rem' }}>Loading ride details...</div>;
+  if (!booking) return <div style={{ textAlign: 'center', padding: '3rem' }}>Ride not found.</div>;
 
   return (
     <div className="grid-2">
@@ -51,7 +63,7 @@ const RideTracking = () => {
               <p><strong>Rating:</strong> ⭐ {booking.driver.rating}</p>
             </>
           ) : (
-            <p>Assigning driver...</p>
+            <p>Waiting for a driver to accept your request...</p>
           )}
         </div>
 
@@ -70,16 +82,18 @@ const RideTracking = () => {
 
       {/* Map Simulation */}
       <div className="glass" style={{ overflow: 'hidden', height: '500px' }}>
-        <MapContainer center={position} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+        <MapContainer center={defaultCenter} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <Marker position={position}>
-            <Popup>
-              Driver's approximate location.
-            </Popup>
+          <Marker position={routeCoords[0]}>
+            <Popup>Pickup Location: {booking.pickup}</Popup>
           </Marker>
+          <Marker position={routeCoords[1]}>
+            <Popup>Dropoff Location: {booking.dropoff}</Popup>
+          </Marker>
+          <Polyline pathOptions={{ color: 'var(--primary)', weight: 4 }} positions={routeCoords} />
         </MapContainer>
       </div>
     </div>

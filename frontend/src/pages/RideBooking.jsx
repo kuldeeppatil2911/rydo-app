@@ -34,6 +34,13 @@ const RideBooking = () => {
     setLoading(true);
     try {
       const payload = { ...formData, ...estimate };
+      
+      if (formData.paymentMode === 'Card') {
+        navigate('/checkout', { state: { payload } });
+        return;
+      }
+
+      // If Cash or UPI, book directly
       const res = await axios.post('/ride/book', payload);
       navigate(`/track/${res.data.booking._id}`);
     } catch (err) {

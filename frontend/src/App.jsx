@@ -8,6 +8,9 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import RideBooking from './pages/RideBooking';
 import RideTracking from './pages/RideTracking';
+import AdminDashboard from './pages/AdminDashboard';
+import DriverDashboard from './pages/DriverDashboard';
+import Checkout from './pages/Checkout';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -31,6 +34,9 @@ function App() {
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/book" element={<ProtectedRoute><RideBooking /></ProtectedRoute>} />
             <Route path="/track/:id" element={<ProtectedRoute><RideTracking /></ProtectedRoute>} />
+            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/driver" element={<ProtectedRoute><DriverDashboard /></ProtectedRoute>} />
           </Routes>
         </main>
       </div>
