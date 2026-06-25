@@ -11,7 +11,19 @@ const DriverDashboard = () => {
   const fetchRides = async () => {
     try {
       const res = await axios.get('/driver/pending');
-      setRides(res.data);
+      const newRides = res.data;
+      
+      // Check for new rides to trigger notification
+      if (newRides.length > rides.length && rides.length !== 0) {
+        if (Notification.permission === 'granted') {
+          new Notification('New Ride Request', {
+            body: `A new ride request is available!`,
+            icon: '/vite.svg'
+          });
+        }
+      }
+
+      setRides(newRides);
       setLoading(false);
     } catch (err) {
       console.error(err);
@@ -20,6 +32,11 @@ const DriverDashboard = () => {
   };
 
   useEffect(() => {
+    // Request notification permission on mount
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+
     fetchRides();
     const interval = setInterval(fetchRides, 5000); // Poll for new rides
     return () => clearInterval(interval);

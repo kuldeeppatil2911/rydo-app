@@ -17,10 +17,27 @@ const RideTracking = () => {
   ]);
 
   useEffect(() => {
+    // Request notification permission on mount
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+
     const fetchRide = async () => {
       try {
         const res = await axios.get(`/ride/${id}`);
-        setBooking(res.data);
+        const newBooking = res.data;
+        
+        // Check for status change to trigger notification
+        if (booking && booking.status !== newBooking.status) {
+          if (Notification.permission === 'granted') {
+            new Notification('Ride Update', {
+              body: `Your ride status is now: ${newBooking.status}`,
+              icon: '/vite.svg'
+            });
+          }
+        }
+
+        setBooking(newBooking);
         
         // Slightly randomizing coords just for visual effect on reload
         const offset = Math.random() * 0.01;
@@ -40,7 +57,7 @@ const RideTracking = () => {
     // Polling to simulate status updates from driver app
     const interval = setInterval(fetchRide, 5000);
     return () => clearInterval(interval);
-  }, [id]);
+  }, [id, booking]);
 
   if (loading) return <div style={{ textAlign: 'center', padding: '3rem' }}>Loading ride details...</div>;
   if (!booking) return <div style={{ textAlign: 'center', padding: '3rem' }}>Ride not found.</div>;
